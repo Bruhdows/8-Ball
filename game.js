@@ -14,7 +14,7 @@ class PoolGame {
         this.POCKET_RADIUS = 18;
         this.FRICTION = 0.985;
         this.MIN_VELOCITY = 0.05;
-        
+
         this.COLORS = {
             table: '#0d5016',
             hole: '#1a1a1a',
@@ -62,8 +62,8 @@ class PoolGame {
 
     detectMobile() {
         return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
-               ('ontouchstart' in window) ||
-               (navigator.maxTouchPoints > 0);
+            ('ontouchstart' in window) ||
+            (navigator.maxTouchPoints > 0);
     }
 
     setupEventListeners() {
@@ -76,7 +76,7 @@ class PoolGame {
         document.getElementById('add-player').addEventListener('click', () => this.addPlayer());
         document.getElementById('remove-player').addEventListener('click', () => this.removePlayer());
         document.getElementById('restart-game').addEventListener('click', () => this.reset());
-        
+
         window.addEventListener('resize', () => this.handleResize());
         this.canvas.addEventListener('contextmenu', e => e.preventDefault());
     }
@@ -85,7 +85,7 @@ class PoolGame {
         this.canvas.addEventListener('mousemove', this.handleMouseMove.bind(this));
         this.canvas.addEventListener('mousedown', this.handleMouseDown.bind(this));
         this.canvas.addEventListener('mouseup', this.handleMouseUp.bind(this));
-        
+
         window.addEventListener('mousemove', this.handleGlobalMouseMove.bind(this));
         window.addEventListener('mouseup', this.handleMouseUp.bind(this));
     }
@@ -100,7 +100,7 @@ class PoolGame {
     handleTouchStart(e) {
         e.preventDefault();
         if (e.touches.length !== 1) return;
-        
+
         const touch = e.touches[0];
         this.touchId = touch.identifier;
         const pos = this.getTouchPosition(touch);
@@ -110,10 +110,10 @@ class PoolGame {
     handleTouchMove(e) {
         e.preventDefault();
         if (e.touches.length !== 1) return;
-        
+
         const touch = Array.from(e.touches).find(t => t.identifier === this.touchId);
         if (!touch) return;
-        
+
         const pos = this.getTouchPosition(touch);
         this.handleInputMove(pos);
     }
@@ -174,24 +174,33 @@ class PoolGame {
 
     handleInputDown(pos) {
         if (this.gameOver || this.ballsMoving()) return;
-        
+
         if (this.placingCueBall) {
             if (this.isValidCueBallPosition(pos.x, pos.y)) {
-                const cueBall = this.balls.find(b => b.number === 0) || this.balls[0];
-                cueBall.x = pos.x;
-                cueBall.y = pos.y;
+                let cueBall = this.balls.find(b => b.number === 0);
+                if (!cueBall) {
+                    cueBall = {
+                        x: pos.x, y: pos.y, vx: 0, vy: 0, r: this.BALL_RADIUS,
+                        color: this.COLORS.cueball, number: 0, type: 'cue'
+                    };
+                    this.balls.unshift(cueBall);
+                } else {
+                    cueBall.x = pos.x;
+                    cueBall.y = pos.y;
+                }
                 this.placingCueBall = false;
                 this.canAim = true;
                 this.updateUI();
             }
             return;
         }
-        
+
+
         if (!this.canAim) return;
-        
+
         const cueBall = this.balls[0];
         const distance = Math.hypot(cueBall.x - pos.x, cueBall.y - pos.y);
-        
+
         if (distance <= cueBall.r * (this.isMobile ? 3 : 1)) {
             this.drag = { active: true, start: pos, vector: { x: 0, y: 0 } };
             this.mouse = pos;
@@ -200,11 +209,11 @@ class PoolGame {
 
     handleInputUp() {
         if (!this.drag.active) return;
-        
+
         if (this.drag.vector && (Math.abs(this.drag.vector.x) > 1 || Math.abs(this.drag.vector.y) > 1)) {
             this.shootCueBall();
         }
-        
+
         this.drag = { active: false, start: null, vector: null };
     }
 
@@ -217,18 +226,18 @@ class PoolGame {
     isValidCueBallPosition(x, y) {
         if (x - this.BALL_RADIUS < 0 || x + this.BALL_RADIUS > this.canvas.width) return false;
         if (y - this.BALL_RADIUS < 0 || y + this.BALL_RADIUS > this.canvas.height) return false;
-        
+
         for (let ball of this.balls) {
             if (ball.number === 0) continue;
             const distance = Math.hypot(x - ball.x, y - ball.y);
             if (distance < this.BALL_RADIUS * 2.5) return false;
         }
-        
+
         for (let [hx, hy] of this.holes) {
             const distance = Math.hypot(x - hx, y - hy);
             if (distance < this.POCKET_RADIUS + this.BALL_RADIUS) return false;
         }
-        
+
         return true;
     }
 
@@ -245,7 +254,7 @@ class PoolGame {
         const { x, y } = this.drag.vector;
         const length = Math.sqrt(x * x + y * y);
         const force = Math.min(length, 100) * (this.isMobile ? 0.15 : 0.2);
-        
+
         this.balls[0].vx = -(x / length) * force;
         this.balls[0].vy = -(y / length) * force;
         this.canAim = false;
@@ -259,7 +268,7 @@ class PoolGame {
 
     createBalls() {
         this.balls = [];
-        
+
         const cueBall = {
             x: 400, y: 200, vx: 0, vy: 0, r: this.BALL_RADIUS,
             color: this.COLORS.cueball, number: 0, type: 'cue'
@@ -277,13 +286,13 @@ class PoolGame {
             for (let col = 0; col < numBalls; col++) {
                 const y = rowStartY + col * 2 * this.BALL_RADIUS;
                 const number = (row === 2 && col === 2) ? 8 : ballNumber++;
-                
+
                 this.balls.push({
                     x, y, vx: 0, vy: 0, r: this.BALL_RADIUS,
                     color: this.COLORS.balls[number],
                     number, type: this.BALL_TYPES[number]
                 });
-                
+
                 if (ballNumber > 15) break;
             }
             if (ballNumber > 15) break;
@@ -296,8 +305,8 @@ class PoolGame {
 
     isInBounds(e) {
         const rect = this.canvas.getBoundingClientRect();
-        return e.clientX >= rect.left && e.clientX <= rect.right && 
-               e.clientY >= rect.top && e.clientY <= rect.bottom;
+        return e.clientX >= rect.left && e.clientX <= rect.right &&
+            e.clientY >= rect.top && e.clientY <= rect.bottom;
     }
 
     addPlayer() {
@@ -338,15 +347,15 @@ class PoolGame {
     updatePlayersDisplay() {
         const grid = document.getElementById('players-grid');
         const count = document.getElementById('player-count');
-        
+
         grid.innerHTML = '';
         count.textContent = this.players.length;
-        
+
         this.players.forEach((player, index) => {
             const box = document.createElement('div');
             box.className = 'player-box';
             box.textContent = player.name;
-            
+
             if (index === this.currentPlayerIndex && !this.gameOver) {
                 box.classList.add('current');
             }
@@ -356,10 +365,10 @@ class PoolGame {
             if (player.type) {
                 box.textContent += ` (${player.type})`;
             }
-            
+
             grid.appendChild(box);
         });
-        
+
         document.getElementById('add-player').disabled = this.players.length >= 8;
         document.getElementById('remove-player').disabled = this.players.length <= 2;
     }
@@ -367,14 +376,14 @@ class PoolGame {
     updateScoreDisplay() {
         const solids = this.pocketedBalls.filter(b => b.type === 'solid').length;
         const stripes = this.pocketedBalls.filter(b => b.type === 'stripe').length;
-        
+
         document.getElementById('solids-count').textContent = solids;
         document.getElementById('stripes-count').textContent = stripes;
     }
 
     updateStatusDisplay() {
         const status = document.getElementById('game-status');
-        
+
         if (this.gameOver) {
             status.textContent = `${this.winner} Wins!`;
             status.className = 'status-winner';
@@ -396,10 +405,10 @@ class PoolGame {
     handlePockets(pocketed) {
         let cuePocketed = false, eightPocketed = false, validShot = false;
         const player = this.getCurrentPlayer();
-        
+
         pocketed.forEach(ball => {
             this.pocketedBalls.push(ball);
-            
+
             if (ball.number === 0) {
                 cuePocketed = true;
             } else if (ball.number === 8) {
@@ -427,7 +436,7 @@ class PoolGame {
         if (eightPocketed) {
             const remaining = this.balls.filter(b => b.number !== 0 && player.type === b.type).length;
             this.gameOver = true;
-            
+
             if (remaining === 0) {
                 this.winner = player.name;
             } else {
@@ -445,12 +454,12 @@ class PoolGame {
 
     update() {
         const moving = this.ballsMoving();
-        
+
         if (moving) {
             this.canAim = false;
             this.updateBalls();
             this.handleCollisions();
-            
+
             const pocketed = [];
             this.balls = this.balls.filter(ball => {
                 if (this.checkPocket(ball)) {
@@ -459,14 +468,14 @@ class PoolGame {
                 }
                 return true;
             });
-            
+
             if (pocketed.length > 0) {
                 this.handlePockets(pocketed);
             }
         } else if (!this.gameOver && !this.canAim && !this.placingCueBall) {
             this.canAim = true;
         }
-        
+
         this.updateUI();
     }
 
@@ -476,10 +485,10 @@ class PoolGame {
             ball.y += ball.vy;
             ball.vx *= this.FRICTION;
             ball.vy *= this.FRICTION;
-            
+
             if (Math.abs(ball.vx) < this.MIN_VELOCITY) ball.vx = 0;
             if (Math.abs(ball.vy) < this.MIN_VELOCITY) ball.vy = 0;
-            
+
             this.handleWallCollision(ball);
         });
     }
@@ -535,7 +544,7 @@ class PoolGame {
         this.drawTable();
         this.drawAimLine();
         this.balls.forEach(ball => this.drawBall(ball));
-        
+
         if (this.placingCueBall) {
             this.drawCueBallPlacement();
         }
@@ -555,7 +564,7 @@ class PoolGame {
 
     drawAimLine() {
         if (!this.drag.active || !this.drag.vector) return;
-        
+
         const cueBall = this.balls[0];
         this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
         this.ctx.lineWidth = 3;
@@ -581,28 +590,28 @@ class PoolGame {
 
     drawBall(ball) {
         const { x, y, r, color, number, type } = ball;
-        
+
         this.ctx.fillStyle = color;
         this.ctx.beginPath();
         this.ctx.arc(x, y, r, 0, Math.PI * 2);
         this.ctx.fill();
-        
+
         this.ctx.strokeStyle = '#000';
         this.ctx.lineWidth = 1;
         this.ctx.stroke();
-        
+
         if (type === 'stripe') {
             this.ctx.fillStyle = 'white';
             this.ctx.fillRect(x - r * 0.8, y - r * 0.25, r * 1.6, r * 0.5);
             this.ctx.strokeRect(x - r * 0.8, y - r * 0.25, r * 1.6, r * 0.5);
         }
-        
+
         if (number > 0) {
             this.ctx.fillStyle = (type === 'stripe' || number === 8) ? '#000' : '#fff';
             this.ctx.font = 'bold 12px Inter, Arial';
             this.ctx.textAlign = 'center';
             this.ctx.textBaseline = 'middle';
-            
+
             this.ctx.strokeStyle = (type === 'stripe' || number === 8) ? '#fff' : '#000';
             this.ctx.lineWidth = 2;
             this.ctx.strokeText(number, x, y);
