@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>8-Ball Pool</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>8-Ball</h1>
+        <h2>I like balls.</h2>
+    </header>
+
+    <main>
+        <section class="game-controls">
+            <div class="player-management">
+                <button id="remove-player" class="btn btn-danger">−</button>
+                <div class="player-display">
+                    <div id="players-grid"></div>
+                    <div class="player-count">Players: <span id="player-count">2</span></div>
+                </div>
+                <button id="add-player" class="btn btn-success">+</button>
+            </div>
+            
+            <div class="game-info-panel">
+                <div class="current-turn">
+                    <div id="game-status"></div>
+                </div>
+                <div class="score-display">
+                    <span class="score-item solids">Solids: <span id="solids-count">0</span></span>
+                    <span class="score-item stripes">Stripes: <span id="stripes-count">0</span></span>
+                </div>
+                <button id="restart-game" class="btn btn-primary btn-wide">Restart Game</button>
+            </div>
+        </section>
+
+        <canvas id="game" width="800" height="400"></canvas>
+    </main>
+
+    <footer>
+        <p>Made with <span class="heart">❤️</span> by <a href="https://bruhdows.com" target="_blank" rel="noopener noreferrer">Bruhdows</a></p>
+    </footer>
+
+    <script src="game.js"></script>
+</body>
+</html>
